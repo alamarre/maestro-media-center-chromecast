@@ -39,11 +39,22 @@ function getValidServerUrl(serverUrls, callback) {
 	});
 }
 
+function pauseVideo() {
+	video.pause();
+	$("#current-episode-info").show();
+}
+
+function continueVideo() {
+	video.play();
+	$("#current-episode-info").show();
+	$("#current-episode-info").fadeOut(5000);
+}
+
 function handleBuiltInMessages(message) {
 	if (message.data.type == "PAUSE") {
-		video.pause();
+		pauseVideo();
 	} else if (message.data.type == "PLAY") {
-		video.play();
+		continueVideo();
 	}
 }
 
@@ -83,6 +94,7 @@ function onInitMessage(event) {
 		getValidServerUrl(message.serverUrls, function () {
 			setupWebsocket();
 		});	
+		$("#connected-device").html(myName);
 	}
 }
 
@@ -121,11 +133,11 @@ function setupWebsocket() {
 				if (typeof message.folder != "undefined") {
 					onInitMessage({"data":received_msg});
 				} else {
-					video.play();
+					continueVideo();
 				}
 				break;	
 			case "pause":
-				video.pause();
+				pauseVideo();
 				break;
 			case "seek":
 				seekPercent(parseInt(message.percent));
@@ -153,6 +165,7 @@ function seekPercent(percent) {
 
 function playVideo(index) {
 	$(video).empty();
+	$("#splash-screen").hide();
 	window.index = index;
 	if (index >= window.files.length) {
 		playNextSeason();
@@ -168,7 +181,8 @@ function playVideo(index) {
 	$(video).append(source);
 
 	video.load();
-	video.play();
+	$("#current-episode-info").html(window.files[index]);
+	continueVideo();
 }
 
 function playNextSeason() {
