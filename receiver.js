@@ -9,6 +9,19 @@ window.onload = function () {
 	bus.onMessage = handleBuiltInMessages;
 
 	window.castReceiverManager.start();
+	
+	if(getParameterByName("host")!=null) {
+		var id = getParameterByName("id")||"Maestro Auto Chromecast";
+		var data = {
+                "action": "connect",
+                "port": getParameterByName("port")||8080,
+                "scheme": getParameterByName("protocol")||"http",
+                "guid": id,
+                "deviceName": id,
+				"serverUrls": [getParameterByName("host")]
+		};
+		onInitMessage({"data":JSON.stringify(data)});
+	}
 }
 
 var scheme;
@@ -24,8 +37,18 @@ window.addEventListener("message", function (event) {
 	console.log(event);
 });
 
+function getParameterByName(name) {
+    name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+    var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+        results = regex.exec(location.search);
+    return results === null ? null : decodeURIComponent(results[1].replace(/\+/g, " "));
+}
+
 function getValidServerUrl(serverUrls, callback) {
 	var currentServerUrl = serverUrls[0];
+	if(scheme.indexOf(":")==-1) {
+		scheme +=":";
+	}
 	$.ajax({
 		url : scheme + "//" + currentServerUrl + ":" + port + "/api/v1.0/health",
 		success : function () {
@@ -34,6 +57,7 @@ function getValidServerUrl(serverUrls, callback) {
 		},
 		error : function () {
 			serverUrls.splice(0, 1);
+			if(serverUrls.length==0) return;
 			getValidServerUrl(serverUrls, callback);
 		}
 	});
