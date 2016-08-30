@@ -9,7 +9,7 @@ window.onload = function () {
 	bus.onMessage = handleBuiltInMessages;
 
 	window.castReceiverManager.start();
-	
+
 	if(getParameterByName("host")!=null) {
 		var id = getParameterByName("id")||"Maestro Auto Chromecast";
 		var data = {
@@ -89,14 +89,14 @@ function onInitMessage(event) {
 	console.log(message.action);
 	if (message.action == "play") {
 		folder = message.folder;
-		
+
 		var playSeasonFunction = function() {
 			loadSeason(folder, function (files) {
 				window.files = files;
 				playVideo(parseInt(message.index));
 			});
 		};
-		
+
 		if(typeof message.serverUrls == "undefined") {
 			playSeasonFunction();
 			return;
@@ -117,7 +117,7 @@ function onInitMessage(event) {
 		guid = message.guid;
 		getValidServerUrl(message.serverUrls, function () {
 			setupWebsocket();
-		});	
+		});
 		$("#connected-device").html(myName);
 	}
 }
@@ -159,7 +159,7 @@ function setupWebsocket() {
 				} else {
 					continueVideo();
 				}
-				break;	
+				break;
 			case "pause":
 				pauseVideo();
 				break;
@@ -195,6 +195,7 @@ function playVideo(index) {
 		playNextSeason();
 		return;
 	}
+	$(video).attr("crossorigin", "anonymous");
 	var src = "/videos";
 	src += folder + "/" + window.files[index];
 	src = scheme + "//" + serverUrl + ":" + port + src;
@@ -203,6 +204,14 @@ function playVideo(index) {
 	$(source).attr("type", "video/mp4");
 	$(source).attr("src", src);
 	$(video).append(source);
+
+	var track = document.createElement("track");
+	$(track).attr("kind", "subtitles");
+	$(track).attr("label", "English");
+	$(track).attr("srclang", "en");
+	$(track).attr("default", true);
+	$(track).attr("src", src.replace(".mp4", ".vtt"));
+	$(video).append(track);
 
 	video.load();
 	$("#current-episode-info").html(window.files[index]);
@@ -275,7 +284,9 @@ function getFolderListing(folder, callback) {
 		},
 		success : function (response) {
 			console.log(response);
-
+			response.files = response.files.filter(function(file) {
+            	return file.indexOf(".mp4") == (file.length-".mp4".length);
+        	});
 			callback(response);
 		},
 		error : function (err) {
@@ -293,7 +304,9 @@ function loadSeason(folder, callback) {
 		},
 		success : function (response) {
 			console.log(response);
-
+			response.files = response.files.filter(function(file) {
+            	return file.indexOf(".mp4") == (file.length-".mp4".length);
+        	});
 			callback(response.files);
 		},
 		error : function (err) {
